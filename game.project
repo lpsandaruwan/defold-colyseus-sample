@@ -1,0 +1,21 @@
+[bootstrap]
+main_collection = /menu/menu.collectionc
+
+[script]
+shared_state = 1
+
+[display]
+width = 960
+height = 640
+
+[android]
+input_method = HiddenInputField
+
+[project]
+title = devMode
+dependencies#0 = https://github.com/defold/extension-websocket/archive/master.zip
+dependencies#1 = https://github.com/britzl/deftest/archive/master.zip
+
+[library]
+include_dirs = colyseus
+
