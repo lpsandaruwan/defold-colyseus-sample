@@ -47,21 +47,29 @@ function Room:init(name)
   end)
 end
 
-function Room:connect (endpoint)
-  self.connection:on("message", function(message)
-    self:_on_message(message, { offset = 1 })
+function Room:connect (endpoint, dev_mode_close_callback, room)
+  if room == nil or room == '' then
+    room = self
+  end
+  room.connection:on("message", function(message)
+    room:_on_message(message, { offset = 1 })
   end)
 
-  self.connection:on("close", function(e)
+  room.connection:on("close", function(e)
      -- TODO: check for handshake errors to emit "error" event?
-    self:emit("leave", e)
+    if dev_mode_close_callback == nil or dev_mode_close_callback == '' then
+      room:emit("leave", e)
+    else
+      print(dev_mode_close_callback)
+      dev_mode_close_callback()
+    end
   end)
 
-  self.connection:on("error", function(e)
-    self:emit("error", e)
+  room.connection:on("error", function(e)
+    room:emit("error", e)
   end)
 
-  self.connection:open(endpoint)
+  room.connection:open(endpoint)
 end
 
 -- fossil-delta serializer only

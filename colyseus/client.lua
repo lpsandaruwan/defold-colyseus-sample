@@ -95,7 +95,7 @@ function client:create_matchmake_request(method, room_name, options, callback)
   end)
 end
 
-function client:consume_seat_reservation(response, callback)
+function client:consume_seat_reservation(response, callback, previous_room)
   local room = Room.new(response.room.name)
   room.id = response.room.roomId -- TODO: deprecate .id
   room.room_id = response.room.roomId
@@ -123,7 +123,39 @@ function client:consume_seat_reservation(response, callback)
     options.reconnectionToken = response.reconnectionToken
   end
 
-  room:connect(self:_build_ws_endpoint(response.room, options))
+  if not response.devMode and previous_room == nil then
+    room:connect(self:_build_ws_endpoint(response.room, options))
+  else
+    room:connect(self:_build_ws_endpoint(response.room, options), function ()
+      local retry_count = 0
+      local max_retry_count = 10
+
+      local clock = os.clock
+      local function sleep(n)  -- seconds
+        local t0 = clock()
+        while clock() - t0 <= n do end
+      end
+
+      local function retry_connection()
+        retry_count = retry_count + 1
+
+        if pcall(client:consume_seat_reservation(response, callback, previous_room)) then
+          print("okay...")
+        else
+          if retry_count < max_retry_count then
+            print("not okay...")
+            sleep(1)
+            retry_connection()
+          else
+            print("bye...")
+          end
+        end
+      end
+
+      sleep(1)
+      retry_connection()
+    end, previous_room)
+  end
 end
 
 function client:_build_ws_endpoint(room, options)

@@ -5,7 +5,7 @@ local room
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
-	client = Colyseus.new("ws://192.168.8.163:2567")
+	client = Colyseus.new("ws://localhost:2567")
 end
 
 function on_input(self, action_id, action)
@@ -29,7 +29,7 @@ function on_input(self, action_id, action)
 				gui.set_text(createOrJoinText, "SessionId: " .. room.id)
 			end)
 		elseif gui.pick_node(sendMessageButton, action.x, action.y) then
-			room:send("up", room.id .. " has joined!")
+			room:send("up", room.id .. " has sent a message!")
 		else
 		end
 	end
