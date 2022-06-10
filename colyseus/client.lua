@@ -97,6 +97,7 @@ end
 
 function client:consume_seat_reservation(response, callback, previous_room)
   local room = Room.new(response.room.name)
+  print(response.room)
   room.id = response.room.roomId -- TODO: deprecate .id
   room.room_id = response.room.roomId
 
@@ -123,9 +124,15 @@ function client:consume_seat_reservation(response, callback, previous_room)
     options.reconnectionToken = response.reconnectionToken
   end
 
+  local target_room = previous_room
+  if previous_room == nil then
+    target_room = room
+  end
+
   if not response.devMode and previous_room == nil then
     room:connect(self:_build_ws_endpoint(response.room, options))
   else
+    print(self:_build_ws_endpoint(response.room, options))
     room:connect(self:_build_ws_endpoint(response.room, options), function ()
       local retry_count = 0
       local max_retry_count = 10
@@ -139,7 +146,7 @@ function client:consume_seat_reservation(response, callback, previous_room)
       local function retry_connection()
         retry_count = retry_count + 1
 
-        if pcall(client:consume_seat_reservation(response, callback, previous_room)) then
+        if pcall(client:consume_seat_reservation(response, callback, target_room)) then
           print("okay...")
         else
           if retry_count < max_retry_count then
@@ -154,7 +161,7 @@ function client:consume_seat_reservation(response, callback, previous_room)
 
       sleep(1)
       retry_connection()
-    end, previous_room)
+    end, target_room)
   end
 end
 
@@ -165,6 +172,8 @@ function client:_build_ws_endpoint(room, options)
   for k, v in pairs(options) do
     table.insert(params, k .. "=" .. tostring(v))
   end
+
+  print(self)
 
   -- build request endpoint
   local protocol = (self.settings.use_ssl and "wss") or "ws"

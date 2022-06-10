@@ -48,7 +48,7 @@ function Room:init(name)
 end
 
 function Room:connect (endpoint, dev_mode_close_callback, room)
-  if room == nil or room == '' then
+  if room == nil then
     room = self
   end
   room.connection:on("message", function(message)
@@ -57,10 +57,9 @@ function Room:connect (endpoint, dev_mode_close_callback, room)
 
   room.connection:on("close", function(e)
      -- TODO: check for handshake errors to emit "error" event?
-    if dev_mode_close_callback == nil or dev_mode_close_callback == '' then
+    if dev_mode_close_callback == nil then
       room:emit("leave", e)
     else
-      print(dev_mode_close_callback)
       dev_mode_close_callback()
     end
   end)

@@ -13,7 +13,7 @@ input_method = HiddenInputField
 
 [project]
 title = devMode
-dependencies#0 = https://github.com/defold/extension-websocket/archive/master.zip
+dependencies#0 = https://github.com/defold/extension-websocket/archive/refs/tags/3.0.0.zip
 dependencies#1 = https://github.com/britzl/deftest/archive/master.zip
 
 [library]
