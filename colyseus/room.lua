@@ -47,8 +47,8 @@ function Room:init(name)
   end)
 end
 
-function Room:connect (endpoint, dev_mode_close_callback, room)
-  if room == nil then
+function Room:connect (endpoint, room, dev_mode_close_callback)
+  if room == nil or room == '' then
     room = self
   end
   room.connection:on("message", function(message)

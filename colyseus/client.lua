@@ -124,45 +124,40 @@ function client:consume_seat_reservation(response, callback, previous_room)
     options.reconnectionToken = response.reconnectionToken
   end
 
-  local target_room = previous_room
+  target_room = previous_room
   if previous_room == nil then
     target_room = room
   end
 
-  if not response.devMode and previous_room == nil then
-    room:connect(self:_build_ws_endpoint(response.room, options))
-  else
-    print(self:_build_ws_endpoint(response.room, options))
-    room:connect(self:_build_ws_endpoint(response.room, options), function ()
-      local retry_count = 0
-      local max_retry_count = 10
+  target_room:connect(self:_build_ws_endpoint(response.room, options), target_room, response.devMode and function ()
+    local retry_count = 0
+    local max_retry_count = 8
 
-      local clock = os.clock
-      local function sleep(n)  -- seconds
-        local t0 = clock()
-        while clock() - t0 <= n do end
-      end
+    local clock = os.clock
+    local function sleep(n)  -- seconds
+      local t0 = clock()
+      while clock() - t0 <= n do end
+    end
 
-      local function retry_connection()
-        retry_count = retry_count + 1
+    local function retry_connection()
+      retry_count = retry_count + 1
 
-        if pcall(client:consume_seat_reservation(response, callback, target_room)) then
-          print("okay...")
+      if pcall(client.consume_seat_reservation, client, response, callback, target_room) then
+        print("[Colyseus devMode]: Successfully re-established connection with room " .. target_room.room_id)
+      else
+        if retry_count < max_retry_count then
+          print("[Colyseus devMode]: retrying... (" .. retry_count .. " out of " .. max_retry_count .. ")")
+          sleep(2)
+          retry_connection()
         else
-          if retry_count < max_retry_count then
-            print("not okay...")
-            sleep(1)
-            retry_connection()
-          else
-            print("bye...")
-          end
+          print("[Colyseus devMode]: Failed to reconnect. Is your server running? Please check server logs.")
         end
       end
+    end
 
-      sleep(1)
-      retry_connection()
-    end, target_room)
-  end
+    sleep(2)
+    retry_connection()
+  end)
 end
 
 function client:_build_ws_endpoint(room, options)
@@ -172,8 +167,6 @@ function client:_build_ws_endpoint(room, options)
   for k, v in pairs(options) do
     table.insert(params, k .. "=" .. tostring(v))
   end
-
-  print(self)
 
   -- build request endpoint
   local protocol = (self.settings.use_ssl and "wss") or "ws"
